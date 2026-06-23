@@ -1,3 +1,5 @@
+import { logoFor } from './logos.js';
+
 export function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 // Link a reactor to their actual reaction RECORD, not just their profile:
@@ -32,6 +34,16 @@ export function renderHTML(reactions, { variant = 'default', emptyText = DEFAULT
   const chip = (g) => `<button type="button" class="chip" data-atmo-expand="${esc(g.type)}" aria-expanded="false"><span aria-hidden="true">${esc(g.icon)}</span><span class="n">${g.count}</span><span class="lbl">${esc(g.label)}</span></button><div class="panel" data-atmo-panel="${esc(g.type)}" hidden></div>`;
   if (variant === 'minimal') {
     return `<div class="wrap"><button type="button" class="toggle" data-atmo-toggle aria-expanded="false">◇ ${reactions.total} ATmosphere reactions</button><div class="panel" data-atmo-allpanel hidden></div></div>`;
+  }
+  if (variant === 'full') {
+    const row = (g) => {
+      const logo = g.appId ? `<span class="atmo-logowrap" title="${esc(g.app)}">${logoFor(g.appId, g.app)}</span>` : '';
+      return `<button type="button" class="atmo-row" data-atmo-expand="${esc(g.type)}" aria-expanded="false">`
+        + `${logo}<span class="atmo-ricon" aria-hidden="true">${esc(g.icon)}</span>`
+        + `<span class="n">${g.count}</span><span class="lbl">${esc(g.label)}</span></button>`
+        + `<div class="panel" data-atmo-panel="${esc(g.type)}" hidden></div>`;
+    };
+    return `<div class="wrap"><div class="atmo-rows">${reactions.groups.map(row).join('')}</div></div>`;
   }
   return `<div class="wrap"><div class="chips">${reactions.groups.map(chip).join('')}</div></div>`;
 }

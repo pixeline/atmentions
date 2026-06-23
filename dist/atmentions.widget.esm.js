@@ -20,21 +20,22 @@ async function links({ endpoint, target, collection, path, limit = 100, cursor, 
 
 // src/taxonomy.js
 var KNOWN = {
-  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "\u2665", app: "Bluesky" },
-  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "\u{1F501}", app: "Bluesky" },
-  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "\u2B50", app: "standard.site" },
-  "app.standard-reader.read": { type: "read", label: "Reads", icon: "\u{1F4D6}", app: "standard-reader" },
-  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "standard-reader" },
-  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage" },
-  "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin" },
-  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin" },
-  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble" },
+  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "\u2665", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "\u{1F501}", app: "Bluesky", appId: "bluesky" },
+  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "\u2B50", app: "standard.site", appId: "standard-site" },
+  "app.standard-reader.read": { type: "read", label: "Reads", icon: "\u{1F4D6}", app: "standard-reader", appId: "standard-reader" },
+  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "standard-reader", appId: "standard-reader" },
+  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage", appId: "frontpage" },
+  "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin", appId: "margin" },
+  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin", appId: "margin" },
+  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble", appId: "semble" },
+  "blog.pckt.document": { type: "pckt", label: "pckt", icon: "\u{1F4C4}", app: "pckt", appId: "pckt" },
   "community.lexicon.bookmarks.bookmark": { type: "lex-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Bookmarks" }
 };
 var KNOWN_WITH_PATH = {
-  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "\u{1F4AC}", app: "Bluesky" },
-  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky" },
-  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "\u{1F517}", app: "Bluesky" }
+  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "\u{1F4AC}", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "\u{1F517}", app: "Bluesky", appId: "bluesky" }
 };
 function humanizeNsid(collection) {
   const last = String(collection).split(".").pop() || collection;
@@ -156,6 +157,27 @@ async function resolveReactors(group, subjects, opts = {}) {
   return rows.map((r) => ({ did: r.did, recordUri: `at://${r.did}/${r.collection}/${r.rkey}`, ...byDid.get(r.did) || { handle: r.did, displayName: "", avatar: "" } }));
 }
 
+// src/logos.js
+function mark(bg, letter, fg = "#ffffff") {
+  const c = /^[a-z0-9]$/i.test(letter) ? letter.toUpperCase() : "?";
+  return `<svg class="atmo-logo" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect width="16" height="16" rx="4" fill="${bg}"/><text x="8" y="11.5" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui,sans-serif" fill="${fg}">${c}</text></svg>`;
+}
+var APP_LOGOS = {
+  bluesky: mark("#1185fe", "b"),
+  margin: mark("#222222", "M"),
+  semble: mark("#5b4ee5", "S"),
+  frontpage: mark("#000000", "F"),
+  "standard-site": mark("#1a7f5a", "S"),
+  "standard-reader": mark("#6b7280", "R"),
+  pckt: mark("#e0563f", "P")
+};
+function logoFor(appId, appName) {
+  if (!appId) return "";
+  if (APP_LOGOS[appId]) return APP_LOGOS[appId];
+  const letter = String(appName || appId).trim().charAt(0) || "?";
+  return mark("#9ca3af", letter);
+}
+
 // src/render.js
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -187,6 +209,13 @@ function renderHTML(reactions, { variant = "default", emptyText = DEFAULT_EMPTY 
   if (variant === "minimal") {
     return `<div class="wrap"><button type="button" class="toggle" data-atmo-toggle aria-expanded="false">\u25C7 ${reactions.total} ATmosphere reactions</button><div class="panel" data-atmo-allpanel hidden></div></div>`;
   }
+  if (variant === "full") {
+    const row = (g) => {
+      const logo = g.appId ? `<span class="atmo-logowrap" title="${esc(g.app)}">${logoFor(g.appId, g.app)}</span>` : "";
+      return `<button type="button" class="atmo-row" data-atmo-expand="${esc(g.type)}" aria-expanded="false">${logo}<span class="atmo-ricon" aria-hidden="true">${esc(g.icon)}</span><span class="n">${g.count}</span><span class="lbl">${esc(g.label)}</span></button><div class="panel" data-atmo-panel="${esc(g.type)}" hidden></div>`;
+    };
+    return `<div class="wrap"><div class="atmo-rows">${reactions.groups.map(row).join("")}</div></div>`;
+  }
   return `<div class="wrap"><div class="chips">${reactions.groups.map(chip).join("")}</div></div>`;
 }
 
@@ -208,6 +237,13 @@ var STYLE = `
 .atmo-empty { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 .muted { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 @media (prefers-reduced-motion: no-preference) { .panel { transition: opacity .15s; } }
+.atmo-rows { display:flex; flex-direction:column; gap:.4rem; align-items:flex-start; }
+.atmo-row { display:inline-flex; gap:.4rem; align-items:center; border:1px solid color-mix(in srgb, var(--atmo-fg) 18%, transparent); background:var(--atmo-bg); border-radius:999px; padding:.25rem .7rem; cursor:pointer; font:inherit; color:inherit; }
+.atmo-row:hover, .atmo-row:focus-visible { border-color:var(--atmo-accent); outline:none; }
+.atmo-logowrap { display:inline-flex; }
+.atmo-logo { display:block; }
+.atmo-row .n { font-weight:700; }
+.atmo-row .lbl { color:var(--atmo-muted); }
 `;
 
 // src/widget.js

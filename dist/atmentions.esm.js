@@ -20,21 +20,22 @@ async function links({ endpoint, target, collection, path, limit = 100, cursor, 
 
 // src/taxonomy.js
 var KNOWN = {
-  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "\u2665", app: "Bluesky" },
-  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "\u{1F501}", app: "Bluesky" },
-  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "\u2B50", app: "standard.site" },
-  "app.standard-reader.read": { type: "read", label: "Reads", icon: "\u{1F4D6}", app: "standard-reader" },
-  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "standard-reader" },
-  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage" },
-  "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin" },
-  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin" },
-  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble" },
+  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "\u2665", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "\u{1F501}", app: "Bluesky", appId: "bluesky" },
+  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "\u2B50", app: "standard.site", appId: "standard-site" },
+  "app.standard-reader.read": { type: "read", label: "Reads", icon: "\u{1F4D6}", app: "standard-reader", appId: "standard-reader" },
+  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "standard-reader", appId: "standard-reader" },
+  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage", appId: "frontpage" },
+  "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin", appId: "margin" },
+  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin", appId: "margin" },
+  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble", appId: "semble" },
+  "blog.pckt.document": { type: "pckt", label: "pckt", icon: "\u{1F4C4}", app: "pckt", appId: "pckt" },
   "community.lexicon.bookmarks.bookmark": { type: "lex-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Bookmarks" }
 };
 var KNOWN_WITH_PATH = {
-  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "\u{1F4AC}", app: "Bluesky" },
-  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky" },
-  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "\u{1F517}", app: "Bluesky" }
+  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "\u{1F4AC}", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "\u{1F517}", app: "Bluesky", appId: "bluesky" }
 };
 function humanizeNsid(collection) {
   const last = String(collection).split(".").pop() || collection;

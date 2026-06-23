@@ -46,3 +46,22 @@ test('empty reactions honor a custom empty-text (escaped)', () => {
   const html = renderHTML({ total: 0, groups: [] }, { variant: 'minimal', emptyText: 'Nothing <yet>' });
   assert.ok(html.includes('Nothing &lt;yet&gt;'), 'custom message present and HTML-escaped');
 });
+
+test('full variant: one row per group, app logo for known app + title, none for shared bookmark', () => {
+  const reactions = { total: 3, groups: [
+    { type: 'note', label: 'Notes', icon: '✍️', app: 'Margin', appId: 'margin', count: 2 },
+    { type: 'lex-bookmark', label: 'Bookmarks', icon: '🔖', app: 'Bookmarks', count: 1 },
+  ] };
+  const html = renderHTML(reactions, { variant: 'full' });
+  assert.ok(html.includes('atmo-rows'));
+  assert.strictEqual((html.match(/data-atmo-expand=/g) || []).length, 2, 'one expandable row per group');
+  // known app -> logo wrap with title
+  assert.ok(html.includes('title="Margin"'), 'app name in title');
+  assert.ok(html.includes('atmo-logo'), 'svg logo present for margin');
+  // shared bookmark -> no logo wrap (no appId)
+  assert.ok(!html.includes('title="Bookmarks"'), 'no logo/title for the shared bookmark');
+});
+
+test('full variant: empty reactions still show the empty-state', () => {
+  assert.ok(renderHTML({ total: 0, groups: [] }, { variant: 'full' }).includes('atmo-empty'));
+});

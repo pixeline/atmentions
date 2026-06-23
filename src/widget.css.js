@@ -15,4 +15,11 @@ export const STYLE = `
 .atmo-empty { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 .muted { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 @media (prefers-reduced-motion: no-preference) { .panel { transition: opacity .15s; } }
+.atmo-rows { display:flex; flex-direction:column; gap:.4rem; align-items:flex-start; }
+.atmo-row { display:inline-flex; gap:.4rem; align-items:center; border:1px solid color-mix(in srgb, var(--atmo-fg) 18%, transparent); background:var(--atmo-bg); border-radius:999px; padding:.25rem .7rem; cursor:pointer; font:inherit; color:inherit; }
+.atmo-row:hover, .atmo-row:focus-visible { border-color:var(--atmo-accent); outline:none; }
+.atmo-logowrap { display:inline-flex; }
+.atmo-logo { display:block; }
+.atmo-row .n { font-weight:700; }
+.atmo-row .lbl { color:var(--atmo-muted); }
 `;
