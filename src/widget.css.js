@@ -12,5 +12,7 @@ export const STYLE = `
 .list a { display:inline-flex; gap:.35rem; align-items:center; text-decoration:none; color:inherit; }
 .list img { width:22px; height:22px; border-radius:50%; }
 .panel[hidden] { display:none; }
+.atmo-empty { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
+.muted { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 @media (prefers-reduced-motion: no-preference) { .panel { transition: opacity .15s; } }
 `;

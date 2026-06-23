@@ -26,6 +26,13 @@ test('renderReactorList renders avatars + handles as links', () => {
   assert.ok(html.includes('http://x/a.png'));
 });
 
-test('empty reactions render nothing visible (empty string container)', () => {
-  assert.strictEqual(renderHTML({ total: 0, groups: [] }, { variant: 'default' }).trim(), '');
+test('empty reactions render a discreet default empty-state message', () => {
+  const html = renderHTML({ total: 0, groups: [] }, { variant: 'default' });
+  assert.ok(html.includes('atmo-empty'), 'has empty-state element');
+  assert.ok(/ATmosphere/i.test(html), 'default copy mentions the ATmosphere');
+});
+
+test('empty reactions honor a custom empty-text (escaped)', () => {
+  const html = renderHTML({ total: 0, groups: [] }, { variant: 'minimal', emptyText: 'Nothing <yet>' });
+  assert.ok(html.includes('Nothing &lt;yet&gt;'), 'custom message present and HTML-escaped');
 });

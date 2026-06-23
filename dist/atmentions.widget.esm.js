@@ -148,8 +148,9 @@ function renderReactorList(reactors) {
     return `<li><a href="${href}" target="_blank" rel="noopener">${av}<span>${name}</span></a></li>`;
   }).join("") + "</ul>";
 }
-function renderHTML(reactions, { variant = "default" } = {}) {
-  if (!reactions || !reactions.total) return "";
+var DEFAULT_EMPTY = "No ripples in the ATmosphere yet.";
+function renderHTML(reactions, { variant = "default", emptyText = DEFAULT_EMPTY } = {}) {
+  if (!reactions || !reactions.total) return `<div class="wrap"><p class="atmo-empty">${esc(emptyText)}</p></div>`;
   const chip = (g) => `<button type="button" class="chip" data-atmo-expand="${esc(g.type)}" aria-expanded="false"><span aria-hidden="true">${esc(g.icon)}</span><span class="n">${g.count}</span><span class="lbl">${esc(g.label)}</span></button><div class="panel" data-atmo-panel="${esc(g.type)}" hidden></div>`;
   if (variant === "minimal") {
     return `<div class="wrap"><button type="button" class="toggle" data-atmo-toggle aria-expanded="false">\u25C7 ${reactions.total} ATmosphere reactions</button><div class="panel" data-atmo-allpanel hidden></div></div>`;
@@ -172,6 +173,8 @@ var STYLE = `
 .list a { display:inline-flex; gap:.35rem; align-items:center; text-decoration:none; color:inherit; }
 .list img { width:22px; height:22px; border-radius:50%; }
 .panel[hidden] { display:none; }
+.atmo-empty { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
+.muted { margin:0; font-size:13px; font-style:italic; color:var(--atmo-muted); }
 @media (prefers-reduced-motion: no-preference) { .panel { transition: opacity .15s; } }
 `;
 
@@ -187,6 +190,8 @@ function readSubjects(el) {
 async function mount(el, opts = {}) {
   const root = el.shadowRoot || el.attachShadow({ mode: "open" });
   const variant = el.getAttribute("variant") || "default";
+  const emptyText = el.getAttribute("empty-text") || void 0;
+  const hideEmpty = el.hasAttribute("hide-empty");
   root.innerHTML = `<style>${STYLE}</style><div data-atmo-host></div>`;
   const host = root.querySelector("[data-atmo-host]");
   const subjects = readSubjects(el);
@@ -196,7 +201,7 @@ async function mount(el, opts = {}) {
   } catch {
     return;
   }
-  host.innerHTML = renderHTML(reactions, { variant });
+  host.innerHTML = hideEmpty && (!reactions || !reactions.total) ? "" : renderHTML(reactions, { variant, emptyText });
   const expand = async (type, panel, btn) => {
     if (panel.dataset.loaded) {
       panel.hidden = !panel.hidden;

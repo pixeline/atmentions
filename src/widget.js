@@ -15,13 +15,15 @@ function readSubjects(el) {
 export async function mount(el, opts = {}) {
   const root = el.shadowRoot || el.attachShadow({ mode: 'open' });
   const variant = el.getAttribute('variant') || 'default';
+  const emptyText = el.getAttribute('empty-text') || undefined;
+  const hideEmpty = el.hasAttribute('hide-empty');
   root.innerHTML = `<style>${STYLE}</style><div data-atmo-host></div>`;
   const host = root.querySelector('[data-atmo-host]');
   const subjects = readSubjects(el);
   let reactions;
   try { reactions = await fetchReactions(subjects, opts); }
   catch { return; } // never throw into host; leave empty
-  host.innerHTML = renderHTML(reactions, { variant });
+  host.innerHTML = (hideEmpty && (!reactions || !reactions.total)) ? '' : renderHTML(reactions, { variant, emptyText });
   // expand handlers (event delegation)
   const expand = async (type, panel, btn) => {
     if (panel.dataset.loaded) { panel.hidden = !panel.hidden; btn && btn.setAttribute('aria-expanded', String(!panel.hidden)); return; }
