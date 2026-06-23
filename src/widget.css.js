@@ -22,4 +22,5 @@ export const STYLE = `
 .atmo-logo { display:block; }
 .atmo-row .n { font-weight:700; }
 .atmo-row .lbl { color:var(--atmo-muted); }
+.atmo-icon { width:15px; height:15px; flex:none; vertical-align:text-bottom; }
 `;

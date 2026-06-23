@@ -65,3 +65,12 @@ test('full variant: one row per group, app logo for known app + title, none for 
 test('full variant: empty reactions still show the empty-state', () => {
   assert.ok(renderHTML({ total: 0, groups: [] }, { variant: 'full' }).includes('atmo-empty'));
 });
+
+test('renders Lucide svg icons, not emoji, in default + full', () => {
+  const reactions = { total: 1, groups: [{ type: 'note', label: 'Notes', icon: 'square-pen', app: 'Margin', appId: 'margin', count: 2 }] };
+  const def = renderHTML(reactions, { variant: 'default' });
+  assert.ok(def.includes('<svg class="atmo-icon"'), 'default chip uses an svg icon');
+  assert.ok(!/[✍\u{1F4DD}\u{1F516}]/u.test(def), 'no note/bookmark emoji codepoints');
+  const full = renderHTML(reactions, { variant: 'full' });
+  assert.ok(full.includes('<svg class="atmo-icon"'), 'full row uses an svg icon');
+});
