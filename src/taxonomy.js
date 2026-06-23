@@ -7,7 +7,7 @@ const KNOWN = {
   'app.standard-reader.bookmark':       { type: 'bookmark',  label: 'Bookmarks',  icon: '🔖', app: 'standard-reader' },
   'fyi.unravel.frontpage.post':         { type: 'frontpage', label: 'Frontpage',  icon: '📰', app: 'Frontpage' },
   'at.margin.note':                     { type: 'note',      label: 'Notes',      icon: '✍️', app: 'Margin' },
-  'at.margin.bookmark':                 { type: 'bookmark',  label: 'Bookmarks',  icon: '🔖', app: 'Margin' },
+  'at.margin.bookmark':                 { type: 'margin-bookmark',  label: 'Bookmarks',  icon: '🔖', app: 'Margin' },
   'network.cosmik.card':                { type: 'card',      label: 'Saves',      icon: '🗂️', app: 'Semble' },
 };
 // app.bsky.feed.post needs the path to disambiguate reply vs quote

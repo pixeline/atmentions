@@ -27,7 +27,7 @@ var KNOWN = {
   "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "standard-reader" },
   "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage" },
   "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin" },
-  "at.margin.bookmark": { type: "bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin" },
+  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin" },
   "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble" }
 };
 var KNOWN_WITH_PATH = {
@@ -55,8 +55,8 @@ function normalize(linksAllResults) {
     for (const [collection, paths] of Object.entries(links2)) {
       for (const [path, stats] of Object.entries(paths || {})) {
         const meta = describe(collection, path);
-        const count = stats && stats.records || 0;
-        const dids = stats && stats.distinct_dids || 0;
+        const count = Number(stats && stats.records) || 0;
+        const dids = Number(stats && stats.distinct_dids) || 0;
         if (!count) continue;
         const existing = byType.get(meta.type);
         if (existing) {
@@ -221,7 +221,7 @@ async function mount(el, opts = {}) {
     if (toggle) {
       const panel = host.querySelector("[data-atmo-allpanel]");
       if (!panel.dataset.loaded) {
-        panel.innerHTML = reactions.groups.map((g) => `<strong>${g.icon} ${g.count}</strong> ${g.label}`).join(" \xB7 ");
+        panel.innerHTML = reactions.groups.map((g) => `<strong>${esc(g.icon)} ${g.count}</strong> ${esc(g.label)}`).join(" \xB7 ");
         panel.dataset.loaded = "1";
       }
       panel.hidden = !panel.hidden;

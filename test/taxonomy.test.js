@@ -19,3 +19,10 @@ test('unknown bucket falls back to humanized nsid', () => {
 test('humanizeNsid uses last segment, title-cased', () => {
   assert.strictEqual(humanizeNsid('app.bsky.feed.repost'), 'Repost');
 });
+
+test('margin and standard-reader bookmarks do not collide on type', () => {
+  assert.notStrictEqual(
+    describeBucket('at.margin.bookmark', '.source').type,
+    describeBucket('app.standard-reader.bookmark', '.subject').type
+  );
+});

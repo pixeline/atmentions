@@ -1,5 +1,5 @@
 import { fetchReactions, resolveReactors } from './index.js';
-import { renderHTML, renderReactorList } from './render.js';
+import { renderHTML, renderReactorList, esc } from './render.js';
 import { STYLE } from './widget.css.js';
 
 const hasDOM = typeof window !== 'undefined' && typeof window.HTMLElement !== 'undefined';
@@ -37,7 +37,7 @@ export async function mount(el, opts = {}) {
     const toggle = e.target.closest('[data-atmo-toggle]');
     if (toggle) {
       const panel = host.querySelector('[data-atmo-allpanel]');
-      if (!panel.dataset.loaded) { panel.innerHTML = reactions.groups.map((g) => `<strong>${g.icon} ${g.count}</strong> ${g.label}`).join(' · '); panel.dataset.loaded = '1'; }
+      if (!panel.dataset.loaded) { panel.innerHTML = reactions.groups.map((g) => `<strong>${esc(g.icon)} ${g.count}</strong> ${esc(g.label)}`).join(' · '); panel.dataset.loaded = '1'; }
       panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden));
     }
   });

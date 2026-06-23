@@ -7,8 +7,8 @@ export function normalize(linksAllResults) {
     for (const [collection, paths] of Object.entries(links)) {
       for (const [path, stats] of Object.entries(paths || {})) {
         const meta = describe(collection, path);
-        const count = (stats && stats.records) || 0;
-        const dids = (stats && stats.distinct_dids) || 0;
+        const count = Number(stats && stats.records) || 0;
+        const dids = Number(stats && stats.distinct_dids) || 0;
         if (!count) continue;
         const existing = byType.get(meta.type);
         if (existing) { existing.count += count; existing.distinctDids += dids; }
