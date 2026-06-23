@@ -1,15 +1,5 @@
-// VERIFIED Lucide artwork — fetched by the controller from
-// https://unpkg.com/lucide-static@1.21.0/icons/<name>.svg (ISC license).
-// This IS the exact content to write to ~/work/atmentions/src/icons.js.
-// Path data is genuine Lucide source — do NOT alter or invent any path `d`.
-// Transform already applied vs. raw source: class="lucide lucide-*" -> shared
-// attribute string with class="atmo-icon"; added aria-hidden="true"; removed
-// width="24" height="24" (the .atmo-icon CSS rule controls size). Everything
-// else (viewBox, fill, stroke="currentColor", stroke-* attrs, inner elements)
-// is verbatim. The shared `A` constant avoids 14x duplicated attribute strings.
-
-// Bundled Lucide icons (lucide-static v1.21.0, ISC — lucide.dev): inlined inline
-// SVG, zero runtime/build-time fetch, CSP-safe inside the Shadow DOM.
+// Bundled Lucide icons (lucide-static v1.21.0, ISC — lucide.dev): inlined SVG,
+// zero runtime/build-time fetch, CSP-safe inside the Shadow DOM.
 const A = 'class="atmo-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
 export const ICONS = {
