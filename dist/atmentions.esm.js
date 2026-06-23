@@ -28,11 +28,13 @@ var KNOWN = {
   "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "\u{1F4F0}", app: "Frontpage" },
   "at.margin.note": { type: "note", label: "Notes", icon: "\u270D\uFE0F", app: "Margin" },
   "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Margin" },
-  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble" }
+  "network.cosmik.card": { type: "card", label: "Saves", icon: "\u{1F5C2}\uFE0F", app: "Semble" },
+  "community.lexicon.bookmarks.bookmark": { type: "lex-bookmark", label: "Bookmarks", icon: "\u{1F516}", app: "Bookmarks" }
 };
 var KNOWN_WITH_PATH = {
   "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "\u{1F4AC}", app: "Bluesky" },
-  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky" }
+  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "\u275D", app: "Bluesky" },
+  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "\u{1F517}", app: "Bluesky" }
 };
 function humanizeNsid(collection) {
   const last = String(collection).split(".").pop() || collection;
@@ -52,8 +54,10 @@ function normalize(linksAllResults) {
   const byType = /* @__PURE__ */ new Map();
   for (const result of linksAllResults || []) {
     const links2 = result && result.links || {};
+    const subjectKind = result && result.kind;
     for (const [collection, paths] of Object.entries(links2)) {
       for (const [path, stats] of Object.entries(paths || {})) {
+        if (path.includes("associatedRefs")) continue;
         const meta = describe(collection, path);
         const count = Number(stats && stats.records) || 0;
         const dids = Number(stats && stats.distinct_dids) || 0;
@@ -62,7 +66,7 @@ function normalize(linksAllResults) {
         if (existing) {
           existing.count += count;
           existing.distinctDids += dids;
-        } else byType.set(meta.type, { ...meta, collection, path, count, distinctDids: dids });
+        } else byType.set(meta.type, { ...meta, collection, path, subjectKind, count, distinctDids: dids });
       }
     }
   }
@@ -94,37 +98,54 @@ async function getProfiles({ appview, dids, fetchImpl }) {
 
 // src/index.js
 var DEFAULTS = { indexEndpoint: "https://constellation.microcosm.blue", appview: "https://public.api.bsky.app", userAgent: "atmentions (+https://github.com/pixeline/atmentions)" };
+function urlVariants(url) {
+  if (!url) return [];
+  const u = url.split("#")[0];
+  const toggled = u.endsWith("/") ? u.slice(0, -1) : u + "/";
+  return [u, toggled];
+}
 function subjectsOf({ url, aturi, bsky }) {
   const s = [];
-  if (aturi) s.push(aturi);
-  if (bsky) s.push(bsky);
-  if (url) s.push(url.split("#")[0]);
+  if (aturi) s.push({ target: aturi, kind: "aturi" });
+  if (bsky) s.push({ target: bsky, kind: "bsky" });
+  for (const v of urlVariants(url)) s.push({ target: v, kind: "url" });
   return s;
 }
 async function fetchReactions(subjects, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
-  const targets = subjectsOf(subjects);
   const errors = [];
-  const results = await Promise.all(targets.map(
-    (target) => linksAll({ endpoint: o.indexEndpoint, target, fetchImpl: o.fetchImpl, userAgent: o.userAgent }).catch((e) => {
+  const results = await Promise.all(subjectsOf(subjects).map(
+    ({ target, kind }) => linksAll({ endpoint: o.indexEndpoint, target, fetchImpl: o.fetchImpl, userAgent: o.userAgent }).then((r) => ({ ...r, kind })).catch((e) => {
       errors.push({ target, message: e.message });
-      return { links: {} };
+      return { links: {}, kind };
     })
   ));
   const { total, groups } = normalize(results);
   return { total, groups, errors };
 }
+function targetsFor(group, subjects) {
+  if (group.subjectKind === "aturi") return [subjects.aturi].filter(Boolean);
+  if (group.subjectKind === "bsky") return [subjects.bsky].filter(Boolean);
+  if (group.subjectKind === "url") return urlVariants(subjects.url);
+  return [subjects.aturi, subjects.bsky, ...urlVariants(subjects.url)].filter(Boolean);
+}
 async function resolveReactors(group, subjects, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
-  const isAtUri = group.path === ".document" || group.path === ".subject" || group.collection.startsWith("app.bsky") || group.collection.startsWith("site.standard") || group.collection.startsWith("app.standard-reader");
-  const target = isAtUri ? subjects.aturi || subjects.bsky || subjects.url : subjects.url ? subjects.url.split("#")[0] : subjects.aturi;
   let rows = [];
-  try {
-    const res = await links({ endpoint: o.indexEndpoint, target, collection: group.collection, path: group.path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
-    rows = res.linking_records || [];
-  } catch {
-    return [];
+  for (const target of targetsFor(group, subjects)) {
+    try {
+      const res = await links({ endpoint: o.indexEndpoint, target, collection: group.collection, path: group.path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
+      rows.push(...res.linking_records || []);
+    } catch {
+    }
   }
+  const seen = /* @__PURE__ */ new Set();
+  rows = rows.filter((r) => {
+    const k = `${r.did}/${r.collection}/${r.rkey}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   let profiles = [];
   try {
     profiles = await getProfiles({ appview: o.appview, dids: rows.map((r) => r.did), fetchImpl: o.fetchImpl });

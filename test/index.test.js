@@ -14,5 +14,32 @@ test('fetchReactions queries each provided subject and aggregates; captures erro
   const r = await fetchReactions({ url: 'https://pixeline.be/x', aturi: 'at://did:plc:v/site.standard.document/1' }, { fetchImpl });
   assert.strictEqual(r.total, 2);
   assert.strictEqual(r.groups[0].type, 'recommend');
-  assert.strictEqual(r.errors.length, 1);   // the url subject 503, captured not thrown
+  assert.strictEqual(r.groups[0].subjectKind, 'aturi'); // recommend came from the aturi subject
+  assert.strictEqual(r.errors.length, 2);   // both url variants (slash + no-slash) 503'd, captured not thrown
+});
+
+test('fetchReactions matches URL-keyed reactions regardless of trailing slash', async () => {
+  // the page is queried WITHOUT a trailing slash, but the data lives under the slash variant
+  const fetchImpl = async (url) => {
+    const target = new URL(url).searchParams.get('target');
+    if (target === 'https://pixeline.be/x/') return { ok: true, json: async () => ({ links: { 'at.margin.note': { '.target.source': { records: 2, distinct_dids: 1 } } } }) };
+    return { ok: true, json: async () => ({ links: {} }) };
+  };
+  const r = await fetchReactions({ url: 'https://pixeline.be/x' }, { fetchImpl });
+  const note = r.groups.find((g) => g.type === 'note');
+  assert.ok(note, 'margin note found via the trailing-slash variant');
+  assert.strictEqual(note.count, 2);
+  assert.strictEqual(note.subjectKind, 'url');
+});
+
+test('fetchReactions skips the associatedRefs path (avoids double-counting the linking post)', async () => {
+  const fetchImpl = async (url) => {
+    const target = new URL(url).searchParams.get('target');
+    if (target.startsWith('at://')) return { ok: true, json: async () => ({ links: { 'app.bsky.feed.post': { '.embed.external.associatedRefs[com.atproto.repo.strongRef].uri': { records: 1, distinct_dids: 1 } } } }) };
+    if (target === 'https://pixeline.be/x') return { ok: true, json: async () => ({ links: { 'app.bsky.feed.post': { '.embed.external.uri': { records: 1, distinct_dids: 1 } } } }) }; // a real record lives under ONE url variant
+    return { ok: true, json: async () => ({ links: {} }) };
+  };
+  const r = await fetchReactions({ url: 'https://pixeline.be/x', aturi: 'at://did/site.standard.document/1' }, { fetchImpl });
+  assert.strictEqual(r.total, 1, 'the one linking post counted once, not twice');
+  assert.strictEqual(r.groups[0].type, 'bsky-link');
 });

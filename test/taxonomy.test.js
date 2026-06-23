@@ -26,3 +26,9 @@ test('margin and standard-reader bookmarks do not collide on type', () => {
     describeBucket('app.standard-reader.bookmark', '.subject').type
   );
 });
+
+test('community.lexicon bookmark + bluesky external link card are labeled', () => {
+  assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').label, 'Bookmarks');
+  assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri'),
+    { type: 'bsky-link', label: 'Linked on Bluesky', icon: '🔗', app: 'Bluesky' });
+});

@@ -9,11 +9,13 @@ const KNOWN = {
   'at.margin.note':                     { type: 'note',      label: 'Notes',      icon: '✍️', app: 'Margin' },
   'at.margin.bookmark':                 { type: 'margin-bookmark',  label: 'Bookmarks',  icon: '🔖', app: 'Margin' },
   'network.cosmik.card':                { type: 'card',      label: 'Saves',      icon: '🗂️', app: 'Semble' },
+  'community.lexicon.bookmarks.bookmark': { type: 'lex-bookmark', label: 'Bookmarks', icon: '🔖', app: 'Bookmarks' },
 };
-// app.bsky.feed.post needs the path to disambiguate reply vs quote
+// app.bsky.feed.post needs the path to disambiguate reply vs quote vs link-card
 const KNOWN_WITH_PATH = {
-  'app.bsky.feed.post|.reply.parent.uri': { type: 'reply', label: 'Replies', icon: '💬', app: 'Bluesky' },
-  'app.bsky.feed.post|.embed.record.uri': { type: 'quote', label: 'Quotes',  icon: '❝',  app: 'Bluesky' },
+  'app.bsky.feed.post|.reply.parent.uri':    { type: 'reply',     label: 'Replies',            icon: '💬', app: 'Bluesky' },
+  'app.bsky.feed.post|.embed.record.uri':    { type: 'quote',     label: 'Quotes',             icon: '❝',  app: 'Bluesky' },
+  'app.bsky.feed.post|.embed.external.uri':  { type: 'bsky-link', label: 'Linked on Bluesky',  icon: '🔗', app: 'Bluesky' },
 };
 
 export function humanizeNsid(collection) {
