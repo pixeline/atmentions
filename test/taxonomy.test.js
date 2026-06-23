@@ -4,7 +4,7 @@ import { describe as describeBucket, humanizeNsid } from '../src/taxonomy.js';
 
 test('known buckets map to labels/icons', () => {
   assert.deepStrictEqual(describeBucket('app.bsky.feed.like', '.subject.uri'),
-    { type: 'like', label: 'Likes', icon: '♥', app: 'Bluesky', appId: 'bluesky' });
+    { type: 'like', label: 'Likes', icon: 'heart', app: 'Bluesky', appId: 'bluesky' });
   assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').label, 'Recommends');
   assert.strictEqual(describeBucket('fyi.unravel.frontpage.post', '.url').app, 'Frontpage');
 });
@@ -13,7 +13,7 @@ test('unknown bucket falls back to humanized nsid', () => {
   const d = describeBucket('com.example.foo.bar', '.x');
   assert.strictEqual(d.app, 'com.example.foo');
   assert.strictEqual(d.label, 'Bar');
-  assert.strictEqual(d.icon, '◇');
+  assert.strictEqual(d.icon, 'circle');
 });
 
 test('humanizeNsid uses last segment, title-cased', () => {
@@ -30,7 +30,7 @@ test('margin and standard-reader bookmarks do not collide on type', () => {
 test('community.lexicon bookmark + bluesky external link card are labeled', () => {
   assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').label, 'Bookmarks');
   assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri'),
-    { type: 'bsky-link', label: 'Linked on Bluesky', icon: '🔗', app: 'Bluesky', appId: 'bluesky' });
+    { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky' });
 });
 
 test('known entries carry an appId; shared/generic do NOT', () => {
@@ -40,4 +40,12 @@ test('known entries carry an appId; shared/generic do NOT', () => {
   assert.strictEqual(describeBucket('network.cosmik.card', '.content.url').appId, 'semble');
   assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').appId, undefined);
   assert.strictEqual(describeBucket('com.example.foo.bar', '.x').appId, undefined);
+});
+
+test('icon fields are Lucide names, not emoji', () => {
+  assert.strictEqual(describeBucket('at.margin.note', '.target.source').icon, 'square-pen');
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri').icon, 'link');
+  assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').icon, 'star');
+  assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').icon, 'bookmark');
+  assert.strictEqual(describeBucket('com.example.foo.bar', '.x').icon, 'circle'); // generic fallback
 });
