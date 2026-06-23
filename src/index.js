@@ -34,7 +34,9 @@ export async function resolveReactors(group, subjects, opts = {}) {
     const res = await links({ endpoint: o.indexEndpoint, target, collection: group.collection, path: group.path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
     rows = res.linking_records || [];
   } catch { return []; }
-  const profiles = await getProfiles({ appview: o.appview, dids: rows.map((r) => r.did), fetchImpl: o.fetchImpl });
+  let profiles = [];
+  try { profiles = await getProfiles({ appview: o.appview, dids: rows.map((r) => r.did), fetchImpl: o.fetchImpl }); }
+  catch { profiles = []; }
   const byDid = new Map(profiles.map((p) => [p.did, p]));
   return rows.map((r) => ({ did: r.did, recordUri: `at://${r.did}/${r.collection}/${r.rkey}`, ...(byDid.get(r.did) || { handle: r.did, displayName: '', avatar: '' }) }));
 }
