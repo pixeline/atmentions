@@ -4,7 +4,7 @@ import { describe as describeBucket, humanizeNsid } from '../src/taxonomy.js';
 
 test('known buckets map to labels/icons', () => {
   assert.deepStrictEqual(describeBucket('app.bsky.feed.like', '.subject.uri'),
-    { type: 'like', label: 'Likes', icon: '♥', app: 'Bluesky' });
+    { type: 'like', label: 'Likes', icon: '♥', app: 'Bluesky', appId: 'bluesky' });
   assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').label, 'Recommends');
   assert.strictEqual(describeBucket('fyi.unravel.frontpage.post', '.url').app, 'Frontpage');
 });
@@ -30,5 +30,14 @@ test('margin and standard-reader bookmarks do not collide on type', () => {
 test('community.lexicon bookmark + bluesky external link card are labeled', () => {
   assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').label, 'Bookmarks');
   assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri'),
-    { type: 'bsky-link', label: 'Linked on Bluesky', icon: '🔗', app: 'Bluesky' });
+    { type: 'bsky-link', label: 'Linked on Bluesky', icon: '🔗', app: 'Bluesky', appId: 'bluesky' });
+});
+
+test('known entries carry an appId; shared/generic do NOT', () => {
+  assert.strictEqual(describeBucket('at.margin.note', '.target.source').appId, 'margin');
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri').appId, 'bluesky');
+  assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').appId, 'standard-site');
+  assert.strictEqual(describeBucket('network.cosmik.card', '.content.url').appId, 'semble');
+  assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').appId, undefined);
+  assert.strictEqual(describeBucket('com.example.foo.bar', '.x').appId, undefined);
 });
