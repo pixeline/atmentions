@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { fetchReactions } from '../src/index.js';
+import { fetchReactions, resolveReactors } from '../src/index.js';
 
 test('fetchReactions queries each provided subject and aggregates; captures errors', async () => {
   const fetchImpl = async (url) => {
@@ -42,4 +42,22 @@ test('fetchReactions skips the associatedRefs path (avoids double-counting the l
   const r = await fetchReactions({ url: 'https://pixeline.be/x', aturi: 'at://did/site.standard.document/1' }, { fetchImpl });
   assert.strictEqual(r.total, 1, 'the one linking post counted once, not twice');
   assert.strictEqual(r.groups[0].type, 'bsky-link');
+});
+
+test('resolveReactors dedups reactors by DID (one entry per person per group)', async () => {
+  const fetchImpl = async (url) => {
+    if (url.includes('/links')) {
+      return { ok: true, json: async () => ({ linking_records: [
+        { did: 'did:plc:a', collection: 'at.margin.note', rkey: 'r1' },
+        { did: 'did:plc:a', collection: 'at.margin.note', rkey: 'r2' }, // same person, 2nd note
+      ] }) };
+    }
+    // getProfiles
+    return { ok: true, json: async () => ({ profiles: [{ did: 'did:plc:a', handle: 'alex.test', displayName: 'Alex', avatar: '' }] }) };
+  };
+  const reactors = await resolveReactors(
+    { type: 'note', collection: 'at.margin.note', path: '.target.source', subjectKind: 'url' },
+    { url: 'https://x/' }, { fetchImpl });
+  assert.strictEqual(reactors.length, 1, 'one entry for the one person');
+  assert.strictEqual(reactors[0].did, 'did:plc:a');
 });

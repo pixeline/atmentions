@@ -53,7 +53,7 @@ export async function resolveReactors(group, subjects, opts = {}) {
     } catch { /* skip this target, try the rest */ }
   }
   const seen = new Set();
-  rows = rows.filter((r) => { const k = `${r.did}/${r.collection}/${r.rkey}`; if (seen.has(k)) return false; seen.add(k); return true; });
+  rows = rows.filter((r) => { if (seen.has(r.did)) return false; seen.add(r.did); return true; });
   let profiles = [];
   try { profiles = await getProfiles({ appview: o.appview, dids: rows.map((r) => r.did), fetchImpl: o.fetchImpl }); }
   catch { profiles = []; }
