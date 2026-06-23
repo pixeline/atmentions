@@ -1,0 +1,17 @@
+{
+  "name": "atmentions",
+  "version": "0.1.0",
+  "description": "Webmentions for the ATmosphere — cross-app atproto reactions for any page.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.js",
+    "./widget": "./src/widget.js"
+  },
+  "files": ["src", "dist"],
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": { "esbuild": "^0.23.0" }
+}
