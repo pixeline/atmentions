@@ -20,10 +20,20 @@ test('minimal variant renders a single aggregate control with total', () => {
   assert.ok(html.includes('8'));
 });
 
-test('renderReactorList renders avatars + handles as links', () => {
+test('renderReactorList renders avatars + names, linking to the reaction record', () => {
   const html = renderReactorList([{ did: 'did:plc:a', handle: 'alice.test', displayName: 'Alice', avatar: 'http://x/a.png', recordUri: 'at://did:plc:a/app.bsky.feed.like/1' }]);
-  assert.ok(html.includes('alice.test'));
+  assert.ok(html.includes('Alice'));
   assert.ok(html.includes('http://x/a.png'));
+  // a like has no public page -> pdsls record viewer, NOT the bare profile
+  assert.ok(html.includes('https://pdsls.dev/at://did:plc:a/app.bsky.feed.like/1'), html);
+});
+
+test('reactorHref links a Bluesky post to the post page (not the profile)', async () => {
+  const { reactorHref } = await import('../src/render.js');
+  assert.strictEqual(
+    reactorHref({ handle: 'pixeline.be', did: 'did:plc:v', recordUri: 'at://did:plc:v/app.bsky.feed.post/3abc' }),
+    'https://bsky.app/profile/pixeline.be/post/3abc'
+  );
 });
 
 test('empty reactions render a discreet default empty-state message', () => {
