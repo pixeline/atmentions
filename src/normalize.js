@@ -23,14 +23,7 @@ export function normalize(linksAllResults) {
           existing.count += dids;
           existing.sources.push(source);
         } else {
-          byType.set(meta.type, {
-            ...meta,
-            collection,
-            path,
-            subjectKind,
-            count: dids,
-            sources: [source],
-          });
+          byType.set(meta.type, { ...meta, subjectKind, count: dids, sources: [source] });
         }
       }
     }

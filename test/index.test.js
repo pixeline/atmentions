@@ -145,3 +145,36 @@ test("resolveReactors dedups reactors by DID (one entry per person per group)", 
   assert.strictEqual(reactors.length, 1, "one entry for the one person");
   assert.strictEqual(reactors[0].did, "did:plc:a");
 });
+
+test("resolveReactors fetches every source path and dedups people across them", async () => {
+  const fetchImpl = async (url) => {
+    if (url.includes("/links")) {
+      const path = new URL(url).searchParams.get("path");
+      if (path === ".embed.external.uri")
+        return { ok: true, json: async () => ({ linking_records: [
+          { did: "did:plc:a", collection: "app.bsky.feed.post", rkey: "r1" },
+          { did: "did:plc:b", collection: "app.bsky.feed.post", rkey: "r2" },
+        ] }) };
+      if (path === ".facets[].features[app.bsky.richtext.facet#link].uri")
+        return { ok: true, json: async () => ({ linking_records: [
+          { did: "did:plc:b", collection: "app.bsky.feed.post", rkey: "r3" }, // same person, other path
+          { did: "did:plc:c", collection: "app.bsky.feed.post", rkey: "r4" },
+        ] }) };
+      return { ok: true, json: async () => ({ linking_records: [] }) };
+    }
+    return { ok: true, json: async () => ({ profiles: [] }) }; // getProfiles
+  };
+  const group = {
+    type: "bsky-link",
+    subjectKind: "url",
+    sources: [
+      { collection: "app.bsky.feed.post", path: ".embed.external.uri" },
+      { collection: "app.bsky.feed.post", path: ".facets[].features[app.bsky.richtext.facet#link].uri" },
+    ],
+  };
+  const reactors = await resolveReactors(group, { url: "https://x/" }, { fetchImpl });
+  assert.deepStrictEqual(
+    reactors.map((r) => r.did).sort(),
+    ["did:plc:a", "did:plc:b", "did:plc:c"], // b appeared in both paths -> counted once
+  );
+});
