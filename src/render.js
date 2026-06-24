@@ -19,6 +19,13 @@ export function reactorHref(r) {
   return r.handle && r.handle.includes('.') ? `https://bsky.app/profile/${r.handle}` : '#';
 }
 
+// Link a reactor to their PROFILE (not a specific record): a real handle → their
+// Bluesky profile; an unresolved handle (a bare DID) → their pdsls repo view.
+export function reactorProfileHref(r) {
+  if (r.handle && r.handle.includes('.')) return `https://bsky.app/profile/${r.handle}`;
+  return `https://pdsls.dev/at://${r.did}`;
+}
+
 export function renderReactorList(reactors) {
   if (!reactors || !reactors.length) return '<p class="muted">No one yet.</p>';
   return '<ul class="list">' + reactors.map((r) => {

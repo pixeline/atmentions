@@ -74,3 +74,10 @@ test('renders Lucide svg icons, not emoji, in default + full', () => {
   const full = renderHTML(reactions, { variant: 'full' });
   assert.ok(full.includes('<svg class="atmo-icon"'), 'full row uses an svg icon');
 });
+
+test('reactorProfileHref links to the profile (bsky for a handle, pdsls repo otherwise)', async () => {
+  const { reactorProfileHref } = await import('../src/render.js');
+  assert.strictEqual(reactorProfileHref({ handle: 'alex.test', did: 'did:plc:a' }), 'https://bsky.app/profile/alex.test');
+  assert.strictEqual(reactorProfileHref({ handle: 'did:plc:a', did: 'did:plc:a' }), 'https://pdsls.dev/at://did:plc:a');
+  assert.strictEqual(reactorProfileHref({ handle: '', did: 'did:plc:a' }), 'https://pdsls.dev/at://did:plc:a');
+});
