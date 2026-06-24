@@ -81,3 +81,43 @@ test('reactorProfileHref links to the profile (bsky for a handle, pdsls repo oth
   assert.strictEqual(reactorProfileHref({ handle: 'did:plc:a', did: 'did:plc:a' }), 'https://pdsls.dev/at://did:plc:a');
   assert.strictEqual(reactorProfileHref({ handle: '', did: 'did:plc:a' }), 'https://pdsls.dev/at://did:plc:a');
 });
+
+test('renderMentions composes per-person, groups by app, links verbs + name', async () => {
+  const { renderMentions } = await import('../src/render.js');
+  const actions = [
+    { did: 'did:plc:a', handle: 'alex.test', displayName: 'Alexandre', avatar: '', recordUri: 'at://did:plc:a/app.bsky.feed.like/3k2', verb: 'liked', app: 'Bluesky', appId: 'bluesky' },
+    { did: 'did:plc:a', handle: 'alex.test', displayName: 'Alexandre', avatar: '', recordUri: 'at://did:plc:a/app.bsky.feed.post/3k3', verb: 'replied to', app: 'Bluesky', appId: 'bluesky' },
+    { did: 'did:plc:a', handle: 'alex.test', displayName: 'Alexandre', avatar: '', recordUri: 'at://did:plc:a/at.margin.bookmark/3k1', verb: 'bookmarked', app: 'Margin', appId: 'margin' },
+  ];
+  const html = renderMentions(actions, {});
+  assert.ok(html.includes('atmo-mentions'));
+  assert.ok(html.includes('this on Bluesky'), html);          // newest clause (Bluesky, max rkey 3k3) leads with "this"
+  assert.ok(html.includes('it on Margin'), html);             // older clause uses "it"
+  assert.ok(html.includes(', and '), 'clauses joined with comma+and');
+  assert.ok(html.includes('>liked</a>') && html.includes('>replied to</a>') && html.includes('>bookmarked</a>'), 'each verb is a link');
+  assert.ok(html.includes('liked</a> and <a'), 'two verbs in a clause joined with " and " (no comma)');
+  assert.ok(html.includes('https://bsky.app/profile/alex.test'), 'name links to profile');
+  assert.ok(html.includes('app.bsky.feed.like/3k2'), 'verb links to its own record (like → pdsls)');
+});
+
+test('renderMentions: single action collapses; no-app drops "on"; escapes', async () => {
+  const { renderMentions } = await import('../src/render.js');
+  const one = renderMentions([{ did: 'did:plc:m', handle: 'mondo.test', displayName: 'Mondo', avatar: '', recordUri: 'at://did:plc:m/app.bsky.feed.like/3kx', verb: 'liked', app: 'Bluesky', appId: 'bluesky' }], {});
+  assert.ok(one.includes('this on Bluesky') && one.includes('Mondo'));
+  const noApp = renderMentions([{ did: 'did:plc:b', handle: 'bob.test', displayName: 'Bob', avatar: '', recordUri: 'at://did:plc:b/community.lexicon.bookmarks.bookmark/3k9', verb: 'bookmarked', app: 'Bookmarks', appId: undefined }], {});
+  assert.ok(!noApp.includes(' on Bookmarks'), 'no-appId action drops the "on {app}" clause');
+  assert.ok(/bookmarked<\/a> this/.test(noApp), 'reads "… bookmarked this" with no app');
+  const esc = renderMentions([{ did: 'did:plc:e', handle: 'x.test', displayName: '<b>Eve</b>', avatar: '', recordUri: 'at://did:plc:e/app.bsky.feed.like/3k', verb: 'liked', app: 'Bluesky', appId: 'bluesky' }], {});
+  assert.ok(esc.includes('&lt;b&gt;Eve&lt;/b&gt;') && !esc.includes('<b>Eve</b>'), 'display name escaped');
+});
+
+test('renderMentions: people ordered newest-first by rkey; empty honors emptyText', async () => {
+  const { renderMentions } = await import('../src/render.js');
+  const html = renderMentions([
+    { did: 'did:plc:old', handle: 'old.test', displayName: 'Older', avatar: '', recordUri: 'at://did:plc:old/app.bsky.feed.like/3aaa', verb: 'liked', app: 'Bluesky', appId: 'bluesky' },
+    { did: 'did:plc:new', handle: 'new.test', displayName: 'Newer', avatar: '', recordUri: 'at://did:plc:new/app.bsky.feed.like/3zzz', verb: 'liked', app: 'Bluesky', appId: 'bluesky' },
+  ], {});
+  assert.ok(html.indexOf('Newer') < html.indexOf('Older'), 'newer rkey (3zzz) sorts first');
+  const empty = renderMentions([], { emptyText: 'Nothing <yet>' });
+  assert.ok(empty.includes('atmo-empty') && empty.includes('Nothing &lt;yet&gt;'));
+});
