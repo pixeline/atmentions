@@ -33,6 +33,23 @@ test('community.lexicon bookmark + bluesky external link card are labeled', () =
     { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to' });
 });
 
+test('all bluesky post link paths resolve to one "Linked on Bluesky" type', () => {
+  const expected = { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky' };
+  // link card (already mapped)
+  assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri'), expected);
+  // richtext link facet — new index format
+  assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.facets[].features[app.bsky.richtext.facet#link].uri'), expected);
+  // richtext link facet — old index format
+  assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet#link].uri'), expected);
+  // bridgy-mirrored post
+  assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.bridgyOriginalUrl'), expected);
+});
+
+test('non-link bluesky post paths are unaffected', () => {
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.reply.parent.uri').type, 'reply');
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.embed.record.uri').type, 'quote');
+});
+
 test('known entries carry an appId; shared/generic do NOT', () => {
   assert.strictEqual(describeBucket('at.margin.note', '.target.source').appId, 'margin');
   assert.strictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri').appId, 'bluesky');
