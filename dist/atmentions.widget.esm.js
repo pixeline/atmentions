@@ -20,22 +20,22 @@ async function links({ endpoint, target, collection, path, limit = 100, cursor, 
 
 // src/taxonomy.js
 var KNOWN = {
-  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "heart", app: "Bluesky", appId: "bluesky" },
-  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "repeat-2", app: "Bluesky", appId: "bluesky" },
-  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "star", app: "standard.site", appId: "standard-site" },
-  "app.standard-reader.read": { type: "read", label: "Reads", icon: "book-open", app: "standard-reader", appId: "standard-reader" },
-  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "bookmark", app: "standard-reader", appId: "standard-reader" },
-  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "newspaper", app: "Frontpage", appId: "frontpage" },
-  "at.margin.note": { type: "note", label: "Notes", icon: "square-pen", app: "Margin", appId: "margin" },
-  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "bookmark", app: "Margin", appId: "margin" },
-  "network.cosmik.card": { type: "card", label: "Saves", icon: "folder", app: "Semble", appId: "semble" },
-  "blog.pckt.document": { type: "pckt", label: "pckt", icon: "file-text", app: "pckt", appId: "pckt" },
-  "community.lexicon.bookmarks.bookmark": { type: "lex-bookmark", label: "Bookmarks", icon: "bookmark", app: "Bookmarks" }
+  "app.bsky.feed.like": { type: "like", label: "Likes", icon: "heart", app: "Bluesky", appId: "bluesky", verb: "liked" },
+  "app.bsky.feed.repost": { type: "repost", label: "Reposts", icon: "repeat-2", app: "Bluesky", appId: "bluesky", verb: "reposted" },
+  "site.standard.graph.recommend": { type: "recommend", label: "Recommends", icon: "star", app: "standard.site", appId: "standard-site", verb: "recommended" },
+  "app.standard-reader.read": { type: "read", label: "Reads", icon: "book-open", app: "standard-reader", appId: "standard-reader", verb: "read" },
+  "app.standard-reader.bookmark": { type: "bookmark", label: "Bookmarks", icon: "bookmark", app: "standard-reader", appId: "standard-reader", verb: "bookmarked" },
+  "fyi.unravel.frontpage.post": { type: "frontpage", label: "Frontpage", icon: "newspaper", app: "Frontpage", appId: "frontpage", verb: "posted" },
+  "at.margin.note": { type: "note", label: "Notes", icon: "square-pen", app: "Margin", appId: "margin", verb: "annotated" },
+  "at.margin.bookmark": { type: "margin-bookmark", label: "Bookmarks", icon: "bookmark", app: "Margin", appId: "margin", verb: "bookmarked" },
+  "network.cosmik.card": { type: "card", label: "Saves", icon: "folder", app: "Semble", appId: "semble", verb: "saved" },
+  "blog.pckt.document": { type: "pckt", label: "pckt", icon: "file-text", app: "pckt", appId: "pckt", verb: "saved" },
+  "community.lexicon.bookmarks.bookmark": { type: "lex-bookmark", label: "Bookmarks", icon: "bookmark", app: "Bookmarks", verb: "bookmarked" }
 };
 var KNOWN_WITH_PATH = {
-  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "message-circle", app: "Bluesky", appId: "bluesky" },
-  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "quote", app: "Bluesky", appId: "bluesky" },
-  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky" }
+  "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "message-circle", app: "Bluesky", appId: "bluesky", verb: "replied to" },
+  "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "quote", app: "Bluesky", appId: "bluesky", verb: "quoted" },
+  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky", verb: "linked to" }
 };
 function humanizeNsid(collection) {
   const last = String(collection).split(".").pop() || collection;
@@ -47,7 +47,7 @@ function describe(collection, path) {
   if (KNOWN[collection]) return KNOWN[collection];
   const parts = String(collection).split(".");
   const app = parts.slice(0, -1).join(".") || collection;
-  return { type: `${collection}${path}`, label: humanizeNsid(collection), icon: "circle", app };
+  return { type: `${collection}${path}`, label: humanizeNsid(collection), icon: "circle", app, verb: "reacted to" };
 }
 
 // src/normalize.js
@@ -222,6 +222,10 @@ function reactorHref(r) {
   }
   return r.handle && r.handle.includes(".") ? `https://bsky.app/profile/${r.handle}` : "#";
 }
+function reactorProfileHref(r) {
+  if (r.handle && r.handle.includes(".")) return `https://bsky.app/profile/${r.handle}`;
+  return `https://pdsls.dev/at://${r.did}`;
+}
 function renderReactorList(reactors) {
   if (!reactors || !reactors.length) return '<p class="muted">No one yet.</p>';
   return '<ul class="list">' + reactors.map((r) => {
@@ -231,6 +235,45 @@ function renderReactorList(reactors) {
   }).join("") + "</ul>";
 }
 var DEFAULT_EMPTY = "No ripples in the ATmosphere yet.";
+var rkeyOf = (uri) => String(uri || "").split("/").pop() || "";
+function joinVerbs(p) {
+  return p.length <= 1 ? p.join("") : p.length === 2 ? p[0] + " and " + p[1] : p.slice(0, -1).join(", ") + ", and " + p[p.length - 1];
+}
+function joinClauses(p) {
+  return p.length <= 1 ? p.join("") : p.slice(0, -1).join(", ") + ", and " + p[p.length - 1];
+}
+function renderMentions(actions, { emptyText = DEFAULT_EMPTY } = {}) {
+  if (!actions || !actions.length) return `<div class="wrap"><p class="atmo-empty">${esc(emptyText)}</p></div>`;
+  const byDid = /* @__PURE__ */ new Map();
+  for (const a of actions) {
+    if (!byDid.has(a.did)) byDid.set(a.did, []);
+    byDid.get(a.did).push(a);
+  }
+  const people = [...byDid.values()].map((acts) => ({ acts, maxRkey: acts.reduce((m, a) => rkeyOf(a.recordUri) > m ? rkeyOf(a.recordUri) : m, "") }));
+  people.sort((a, b) => a.maxRkey < b.maxRkey ? 1 : a.maxRkey > b.maxRkey ? -1 : 0);
+  const line = ({ acts }) => {
+    const first = acts[0];
+    const name = esc(first.displayName || first.handle || first.did);
+    const profile = esc(reactorProfileHref(first));
+    const avatar = first.avatar ? `<a class="atmo-m-av" href="${profile}" target="_blank" rel="noopener"><img src="${esc(first.avatar)}" alt="" loading="lazy"></a>` : "";
+    const byApp = /* @__PURE__ */ new Map();
+    for (const a of acts) {
+      const k = a.appId || "";
+      if (!byApp.has(k)) byApp.set(k, []);
+      byApp.get(k).push(a);
+    }
+    const clauses = [...byApp.entries()].map(([appId, list]) => {
+      list.sort((x, y) => rkeyOf(x.recordUri) < rkeyOf(y.recordUri) ? -1 : 1);
+      const verbs = list.map((a) => `<a href="${esc(reactorHref(a))}" target="_blank" rel="noopener">${esc(a.verb)}</a>`);
+      const maxRkey = list.reduce((m, a) => rkeyOf(a.recordUri) > m ? rkeyOf(a.recordUri) : m, "");
+      return { verbs, app: appId ? ` on ${esc(list[0].app)}` : "", maxRkey };
+    });
+    clauses.sort((a, b) => a.maxRkey < b.maxRkey ? 1 : a.maxRkey > b.maxRkey ? -1 : 0);
+    const text = joinClauses(clauses.map((c, i) => `${joinVerbs(c.verbs)} ${i === 0 ? "this" : "it"}${c.app}`));
+    return `<li class="atmo-m">${avatar}<span class="atmo-m-body"><a class="atmo-m-name" href="${profile}" target="_blank" rel="noopener">${name}</a> ${text}</span></li>`;
+  };
+  return `<div class="wrap"><ul class="atmo-mentions">${people.map(line).join("")}</ul></div>`;
+}
 function renderHTML(reactions, { variant = "default", emptyText = DEFAULT_EMPTY } = {}) {
   if (!reactions || !reactions.total) return `<div class="wrap"><p class="atmo-empty">${esc(emptyText)}</p></div>`;
   const chip = (g) => `<button type="button" class="chip" data-atmo-expand="${esc(g.type)}" aria-expanded="false">${iconFor(g.icon)}<span class="n">${g.count}</span><span class="lbl">${esc(g.label)}</span></button><div class="panel" data-atmo-panel="${esc(g.type)}" hidden></div>`;
@@ -249,9 +292,9 @@ function renderHTML(reactions, { variant = "default", emptyText = DEFAULT_EMPTY 
 
 // src/widget.css.js
 var STYLE = `
-:host { --atmo-fg:#3d3c3c; --atmo-muted:#777; --atmo-accent:#f7b4ed; --atmo-bg:transparent; --atmo-radius:.5rem; display:block; }
+:host { --atmo-fg:#3d3c3c; --atmo-muted:#777; --atmo-accent:#f7b4ed; --atmo-bg:transparent; --atmo-radius:.5rem; --atmo-font:system-ui, sans-serif; display:block; }
 :host([appearance="dark"]) { --atmo-fg:#eee; --atmo-muted:#aaa; --atmo-bg:transparent; }
-.wrap { font: 14px/1.4 system-ui, sans-serif; color: var(--atmo-fg); }
+.wrap { font: 14px/1.4 var(--atmo-font); color: var(--atmo-fg); }
 .chips { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
 .chip { display:inline-flex; gap:.35rem; align-items:center; border:1px solid color-mix(in srgb, var(--atmo-fg) 18%, transparent); background:var(--atmo-bg); border-radius:999px; padding:.25rem .6rem; cursor:pointer; font:inherit; color:inherit; }
 .chip:hover, .chip:focus-visible { border-color:var(--atmo-accent); outline:none; }
@@ -273,6 +316,14 @@ var STYLE = `
 .atmo-row .n { font-weight:700; }
 .atmo-row .lbl { color:var(--atmo-muted); }
 .atmo-icon { width:15px; height:15px; flex:none; vertical-align:text-bottom; }
+.atmo-mentions { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.55rem; }
+.atmo-m { display:flex; gap:.5rem; align-items:flex-start; line-height:1.45; }
+.atmo-m-av { flex:none; }
+.atmo-m-av img { width:24px; height:24px; border-radius:50%; display:block; }
+.atmo-m-body { color:var(--atmo-muted); }
+.atmo-m-body a { color:var(--atmo-fg); text-decoration:none; }
+.atmo-m-body a:hover, .atmo-m-body a:focus-visible { text-decoration:underline; outline:none; }
+.atmo-m-name { font-weight:600; }
 `;
 
 // src/widget.js
@@ -296,6 +347,19 @@ async function mount(el, opts = {}) {
   try {
     reactions = await fetchReactions(subjects, opts);
   } catch {
+    return;
+  }
+  if (variant === "mentions") {
+    if (hideEmpty && (!reactions || !reactions.total)) {
+      host.innerHTML = "";
+      return;
+    }
+    host.innerHTML = '<div class="wrap"><p class="muted">Reading the ATmosphere\u2026</p></div>';
+    const groups = reactions && reactions.groups || [];
+    const nested = await Promise.all(groups.map(
+      (g) => resolveReactors(g, subjects, opts).catch(() => []).then((rs) => rs.map((r) => ({ ...r, verb: g.verb, app: g.app, appId: g.appId })))
+    ));
+    host.innerHTML = renderMentions(nested.flat(), { emptyText });
     return;
   }
   host.innerHTML = hideEmpty && (!reactions || !reactions.total) ? "" : renderHTML(reactions, { variant, emptyText });

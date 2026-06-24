@@ -1,5 +1,5 @@
 import { fetchReactions, resolveReactors } from './index.js';
-import { renderHTML, renderReactorList, esc } from './render.js';
+import { renderHTML, renderReactorList, renderMentions, esc } from './render.js';
 import { iconFor } from './icons.js';
 import { STYLE } from './widget.css.js';
 
@@ -24,6 +24,16 @@ export async function mount(el, opts = {}) {
   let reactions;
   try { reactions = await fetchReactions(subjects, opts); }
   catch { return; } // never throw into host; leave empty
+  if (variant === 'mentions') {
+    if (hideEmpty && (!reactions || !reactions.total)) { host.innerHTML = ''; return; }
+    host.innerHTML = '<div class="wrap"><p class="muted">Reading the ATmosphere…</p></div>'; // immediate feedback, never blank
+    const groups = (reactions && reactions.groups) || [];
+    const nested = await Promise.all(groups.map((g) =>
+      resolveReactors(g, subjects, opts).catch(() => []).then((rs) => rs.map((r) => ({ ...r, verb: g.verb, app: g.app, appId: g.appId })))
+    ));
+    host.innerHTML = renderMentions(nested.flat(), { emptyText });
+    return; // no click-to-expand for mentions
+  }
   host.innerHTML = (hideEmpty && (!reactions || !reactions.total)) ? '' : renderHTML(reactions, { variant, emptyText });
   // expand handlers (event delegation)
   const expand = async (type, panel, btn) => {
