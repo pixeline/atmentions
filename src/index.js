@@ -45,12 +45,17 @@ function targetsFor(group, subjects) {
 
 export async function resolveReactors(group, subjects, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
+  // A group can span several (collection, path) sources (e.g. a bsky link via
+  // both the embed card and a richtext facet); resolve across all of them.
+  const sources = group.sources || [{ collection: group.collection, path: group.path }];
   let rows = [];
-  for (const target of targetsFor(group, subjects)) {
-    try {
-      const res = await links({ endpoint: o.indexEndpoint, target, collection: group.collection, path: group.path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
-      rows.push(...(res.linking_records || []));
-    } catch { /* skip this target, try the rest */ }
+  for (const { collection, path } of sources) {
+    for (const target of targetsFor(group, subjects)) {
+      try {
+        const res = await links({ endpoint: o.indexEndpoint, target, collection, path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
+        rows.push(...(res.linking_records || []));
+      } catch { /* skip this source/target, try the rest */ }
+    }
   }
   const seen = new Set();
   rows = rows.filter((r) => { if (seen.has(r.did)) return false; seen.add(r.did); return true; });

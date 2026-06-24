@@ -14,9 +14,15 @@ const KNOWN = {
 };
 // app.bsky.feed.post needs the path to disambiguate reply vs quote vs link-card
 const KNOWN_WITH_PATH = {
-  'app.bsky.feed.post|.reply.parent.uri':    { type: 'reply',     label: 'Replies',           icon: 'message-circle', app: 'Bluesky', appId: 'bluesky', verb: 'replied to' },
+  'app.bsky.feed.post|.reply.parent.uri':    { type: 'reply',     label: 'Replies',           icon: 'message-circle', app: 'Bluesky', appId: 'bluesky' , verb: 'replied to'},
   'app.bsky.feed.post|.embed.record.uri':    { type: 'quote',     label: 'Quotes',            icon: 'quote',  app: 'Bluesky', appId: 'bluesky', verb: 'quoted' },
   'app.bsky.feed.post|.embed.external.uri':  { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to' },
+  // Richtext link facets (a bare URL in the post body) point at the page too.
+  // Constellation emits both an old and new index notation for the same field.
+  'app.bsky.feed.post|.facets[].features[app.bsky.richtext.facet#link].uri':                          { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to' },
+  'app.bsky.feed.post|.facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet#link].uri':   { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to'  },
+  // Bridgy-mirrored fediverse post that links the page; lives in the bsky feed.
+  'app.bsky.feed.post|.bridgyOriginalUrl':   { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to' },
 };
 
 export function humanizeNsid(collection) {

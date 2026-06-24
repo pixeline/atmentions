@@ -1,4 +1,4 @@
-import { describe } from './taxonomy.js';
+import { describe } from "./taxonomy.js";
 
 export function normalize(linksAllResults) {
   const byType = new Map();
@@ -9,14 +9,22 @@ export function normalize(linksAllResults) {
       for (const [path, stats] of Object.entries(paths || {})) {
         // Skip Bluesky's standard.site enrichment ref — it's the same post already
         // counted via .embed.external.uri (the page URL), so it would double-count.
-        if (path.includes('associatedRefs')) continue;
+        if (path.includes("associatedRefs")) continue;
         const meta = describe(collection, path);
-        const count = Number(stats && stats.records) || 0;
+        const records = Number(stats && stats.records) || 0;
         const dids = Number(stats && stats.distinct_dids) || 0;
-        if (!count) continue;
+        if (!records) continue;
+        // Count distinct people, not records. A type can span several paths
+        // (e.g. a bsky link via embed card + richtext facet); keep every source
+        // so reactors can later be resolved across all of them.
+        const source = { collection, path };
         const existing = byType.get(meta.type);
-        if (existing) { existing.count += count; existing.distinctDids += dids; }
-        else byType.set(meta.type, { ...meta, collection, path, subjectKind, count, distinctDids: dids });
+        if (existing) {
+          existing.count += dids;
+          existing.sources.push(source);
+        } else {
+          byType.set(meta.type, { ...meta, subjectKind, count: dids, sources: [source] });
+        }
       }
     }
   }
