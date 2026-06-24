@@ -1,4 +1,4 @@
-import { describe } from "./taxonomy.js";
+import { describe } from './taxonomy.js';
 
 export function normalize(linksAllResults) {
   const byType = new Map();
@@ -9,7 +9,7 @@ export function normalize(linksAllResults) {
       for (const [path, stats] of Object.entries(paths || {})) {
         // Skip Bluesky's standard.site enrichment ref — it's the same post already
         // counted via .embed.external.uri (the page URL), so it would double-count.
-        if (path.includes("associatedRefs")) continue;
+        if (path.includes('associatedRefs')) continue;
         const meta = describe(collection, path);
         const records = Number(stats && stats.records) || 0;
         const dids = Number(stats && stats.distinct_dids) || 0;
@@ -23,7 +23,12 @@ export function normalize(linksAllResults) {
           existing.count += dids;
           existing.sources.push(source);
         } else {
-          byType.set(meta.type, { ...meta, subjectKind, count: dids, sources: [source] });
+          byType.set(meta.type, {
+            ...meta,
+            subjectKind,
+            count: dids,
+            sources: [source],
+          });
         }
       }
     }

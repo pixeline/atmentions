@@ -8,10 +8,18 @@
     ".": "./src/index.js",
     "./widget": "./src/widget.js"
   },
-  "files": ["src", "dist"],
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "test": "node --test",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "format": "prettier --write \"src/**/*.{js,css}\" \"test/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.{js,css}\" \"test/**/*.js\""
   },
-  "devDependencies": { "esbuild": "^0.23.0" }
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "prettier": "^3.8.4"
+  }
 }
