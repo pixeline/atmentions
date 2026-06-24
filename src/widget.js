@@ -29,10 +29,15 @@ export async function mount(el, opts = {}) {
   const expand = async (type, panel, btn) => {
     if (panel.dataset.loaded) { panel.hidden = !panel.hidden; btn && btn.setAttribute('aria-expanded', String(!panel.hidden)); return; }
     const group = reactions.groups.find((g) => g.type === type);
+    // Reveal the panel + "Loading…" BEFORE the network await, so the click has
+    // immediate feedback. (Otherwise the panel stays hidden for the duration of
+    // resolveReactors() and the chip feels dead — unlike the synchronous minimal
+    // breakdown.) The reactor list then swaps in when it resolves.
     panel.innerHTML = 'Loading…';
+    panel.hidden = false; btn && btn.setAttribute('aria-expanded', 'true');
     const reactors = group ? await resolveReactors(group, subjects, opts).catch(() => []) : [];
     panel.innerHTML = renderReactorList(reactors);
-    panel.dataset.loaded = '1'; panel.hidden = false; btn && btn.setAttribute('aria-expanded', 'true');
+    panel.dataset.loaded = '1';
   };
   host.addEventListener('click', async (e) => {
     const chip = e.target.closest('[data-atmo-expand]');

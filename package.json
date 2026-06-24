@@ -1,6 +1,6 @@
 {
   "name": "atmentions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Webmentions for the ATmosphere — cross-app atproto reactions for any page.",
   "type": "module",
   "license": "MIT",

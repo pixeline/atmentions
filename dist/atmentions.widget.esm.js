@@ -307,11 +307,11 @@ async function mount(el, opts = {}) {
     }
     const group = reactions.groups.find((g) => g.type === type);
     panel.innerHTML = "Loading\u2026";
+    panel.hidden = false;
+    btn && btn.setAttribute("aria-expanded", "true");
     const reactors = group ? await resolveReactors(group, subjects, opts).catch(() => []) : [];
     panel.innerHTML = renderReactorList(reactors);
     panel.dataset.loaded = "1";
-    panel.hidden = false;
-    btn && btn.setAttribute("aria-expanded", "true");
   };
   host.addEventListener("click", async (e) => {
     const chip = e.target.closest("[data-atmo-expand]");
