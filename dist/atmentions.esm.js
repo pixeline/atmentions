@@ -35,7 +35,13 @@ var KNOWN = {
 var KNOWN_WITH_PATH = {
   "app.bsky.feed.post|.reply.parent.uri": { type: "reply", label: "Replies", icon: "message-circle", app: "Bluesky", appId: "bluesky", verb: "replied to" },
   "app.bsky.feed.post|.embed.record.uri": { type: "quote", label: "Quotes", icon: "quote", app: "Bluesky", appId: "bluesky", verb: "quoted" },
-  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky", verb: "linked to" }
+  "app.bsky.feed.post|.embed.external.uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky", verb: "linked to" },
+  // Richtext link facets (a bare URL in the post body) point at the page too.
+  // Constellation emits both an old and new index notation for the same field.
+  "app.bsky.feed.post|.facets[].features[app.bsky.richtext.facet#link].uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky" },
+  "app.bsky.feed.post|.facets[app.bsky.richtext.facet].features[app.bsky.richtext.facet#link].uri": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky" },
+  // Bridgy-mirrored fediverse post that links the page; lives in the bsky feed.
+  "app.bsky.feed.post|.bridgyOriginalUrl": { type: "bsky-link", label: "Linked on Bluesky", icon: "link", app: "Bluesky", appId: "bluesky" }
 };
 function humanizeNsid(collection) {
   const last = String(collection).split(".").pop() || collection;
@@ -60,14 +66,17 @@ function normalize(linksAllResults) {
       for (const [path, stats] of Object.entries(paths || {})) {
         if (path.includes("associatedRefs")) continue;
         const meta = describe(collection, path);
-        const count = Number(stats && stats.records) || 0;
+        const records = Number(stats && stats.records) || 0;
         const dids = Number(stats && stats.distinct_dids) || 0;
-        if (!count) continue;
+        if (!records) continue;
+        const source = { collection, path };
         const existing = byType.get(meta.type);
         if (existing) {
-          existing.count += count;
-          existing.distinctDids += dids;
-        } else byType.set(meta.type, { ...meta, collection, path, subjectKind, count, distinctDids: dids });
+          existing.count += dids;
+          existing.sources.push(source);
+        } else {
+          byType.set(meta.type, { ...meta, subjectKind, count: dids, sources: [source] });
+        }
       }
     }
   }
@@ -132,12 +141,15 @@ function targetsFor(group, subjects) {
 }
 async function resolveReactors(group, subjects, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
+  const sources = group.sources || [{ collection: group.collection, path: group.path }];
   let rows = [];
-  for (const target of targetsFor(group, subjects)) {
-    try {
-      const res = await links({ endpoint: o.indexEndpoint, target, collection: group.collection, path: group.path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
-      rows.push(...res.linking_records || []);
-    } catch {
+  for (const { collection, path } of sources) {
+    for (const target of targetsFor(group, subjects)) {
+      try {
+        const res = await links({ endpoint: o.indexEndpoint, target, collection, path, limit: 100, fetchImpl: o.fetchImpl, userAgent: o.userAgent });
+        rows.push(...res.linking_records || []);
+      } catch {
+      }
     }
   }
   const seen = /* @__PURE__ */ new Set();
