@@ -4,7 +4,7 @@ import { describe as describeBucket, humanizeNsid } from '../src/taxonomy.js';
 
 test('known buckets map to labels/icons', () => {
   assert.deepStrictEqual(describeBucket('app.bsky.feed.like', '.subject.uri'),
-    { type: 'like', label: 'Likes', icon: 'heart', app: 'Bluesky', appId: 'bluesky' });
+    { type: 'like', label: 'Likes', icon: 'heart', app: 'Bluesky', appId: 'bluesky', verb: 'liked' });
   assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').label, 'Recommends');
   assert.strictEqual(describeBucket('fyi.unravel.frontpage.post', '.url').app, 'Frontpage');
 });
@@ -30,7 +30,7 @@ test('margin and standard-reader bookmarks do not collide on type', () => {
 test('community.lexicon bookmark + bluesky external link card are labeled', () => {
   assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').label, 'Bookmarks');
   assert.deepStrictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri'),
-    { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky' });
+    { type: 'bsky-link', label: 'Linked on Bluesky', icon: 'link', app: 'Bluesky', appId: 'bluesky', verb: 'linked to' });
 });
 
 test('known entries carry an appId; shared/generic do NOT', () => {
@@ -48,4 +48,13 @@ test('icon fields are Lucide names, not emoji', () => {
   assert.strictEqual(describeBucket('site.standard.graph.recommend', '.document').icon, 'star');
   assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').icon, 'bookmark');
   assert.strictEqual(describeBucket('com.example.foo.bar', '.x').icon, 'circle'); // generic fallback
+});
+
+test('each bucket carries a natural-language verb', () => {
+  assert.strictEqual(describeBucket('app.bsky.feed.like', '.subject.uri').verb, 'liked');
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.reply.parent.uri').verb, 'replied to');
+  assert.strictEqual(describeBucket('app.bsky.feed.post', '.embed.external.uri').verb, 'linked to');
+  assert.strictEqual(describeBucket('at.margin.note', '.target.source').verb, 'annotated');
+  assert.strictEqual(describeBucket('community.lexicon.bookmarks.bookmark', '.subject').verb, 'bookmarked');
+  assert.strictEqual(describeBucket('com.example.foo.bar', '.x').verb, 'reacted to'); // generic fallback
 });
